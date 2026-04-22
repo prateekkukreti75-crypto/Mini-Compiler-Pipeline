@@ -73,3 +73,28 @@ while (counter < 5 && flag == true) {
 
 print(result);
 ```
+
+## Nexus Compiler Web IDE (Frontend & API)
+
+This project also includes a stunning, interactive, glassmorphic React Web Application that visualizes the entire 9-stage pipeline in real-time.
+
+### Starting the Web UI
+You need to run both the API backend and the React frontend.
+
+**1. Start the Flask API:**
+Open a terminal and run the compiler's backend server (it runs on port `5001`):
+```bash
+python3 -m pip install flask flask-cors
+python3 api.py
+```
+
+**2. Start the React Frontend:**
+Open a second terminal, navigate into the `frontend` folder, and start the development server:
+```bash
+cd frontend
+npm install
+npm start
+```
+
+**3. Launch:**
+Navigate to `http://localhost:3000` in your web browser. Type your custom language code into the editor, click **Compile**, and click through the tabs on the right to instantly view the Lexer Tokens, AST, IR, Optimizations, CFG, Registers, Virtual Machine Output, and C Code!
