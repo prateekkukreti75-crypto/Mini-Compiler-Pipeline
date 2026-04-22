@@ -28,12 +28,15 @@ class IRGenerator:
         return self.instructions
 
     def visit_FunctionDecl(self, node):
+        l_end_func = self.new_label()
+        self.instructions.append(('GOTO', l_end_func))
         self.instructions.append(('LABEL', f"FUNC_{node.name}"))
-        for param_type, param_name in node.params:
+        for param_type, param_name in reversed(node.params):
             self.instructions.append(('PARAM_POP', param_name))
         for stmt in node.body:
             self.generate(stmt)
         self.instructions.append(('RETURN_VOID',))
+        self.instructions.append(('LABEL', l_end_func))
 
     def visit_Return(self, node):
         val = self.generate(node.expr)

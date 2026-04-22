@@ -86,8 +86,46 @@ def main():
         print("5. CODE OPTIMIZATION")
         optimizer = Optimizer(ir)
         optimized_ir = optimizer.optimize()
-        print("Optimized IR (with constant folding, propagation, DCE):")
+        print("Optimized IR (with constant folding, propagation, CSE, DCE):")
         print(format_ir(optimized_ir))
+        print()
+        
+        # 6. Control Flow Graph (CFG)
+        print("6. CONTROL FLOW GRAPH (CFG)")
+        from compiler.cfg import CFG
+        cfg = CFG(optimized_ir)
+        cfg.build()
+        cfg.print_cfg()
+        print()
+        
+        # 7. Register Allocation
+        print("7. REGISTER ALLOCATION")
+        from compiler.register_allocator import RegisterAllocator
+        allocator = RegisterAllocator(optimized_ir)
+        reg_ir, reg_map = allocator.apply_allocation()
+        print("Variables mapped to hardware registers:")
+        for var, reg in reg_map.items():
+            print(f"  {var} -> {reg}")
+        print("\nIR with Registers:")
+        print(format_ir(reg_ir))
+        print()
+        
+        # 8. Virtual Machine Execution
+        print("8. VIRTUAL MACHINE EXECUTION")
+        from compiler.vm import VirtualMachine
+        # We run the VM on the optimized IR (before registers, because the VM evaluates string names easily.
+        # But we could also run it on reg_ir!) We'll run it on the normal optimized IR.
+        vm = VirtualMachine(optimized_ir)
+        vm.run()
+        
+        # 9. C-Code Transpiler (Backend)
+        print("9. C-CODE TRANSPILER (BACKEND)")
+        from compiler.transpiler import CTranspiler
+        transpiler = CTranspiler(optimized_ir)
+        c_code = transpiler.transpile()
+        with open('output.c', 'w') as f:
+            f.write(c_code)
+        print("  Successfully generated 'output.c'. You can compile it using: gcc output.c -o my_program")
         print()
         
     except Exception as e:
