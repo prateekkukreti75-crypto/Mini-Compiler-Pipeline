@@ -1,78 +1,75 @@
 # Mini Compiler Pipeline
 
-This project implements a complete custom language compiler pipeline from scratch in Python, demonstrating every crucial stage from lexical analysis up to intermediate code optimization.
+This project implements a complete, end-to-end custom language compiler pipeline from scratch in Python. It demonstrates every crucial stage from lexical analysis up to intermediate code optimization, control flow graph construction, register allocation, simulated virtual machine execution, and C-code transpilation.
 
-## Stages Implemented
+## Language Features Supported
+- **Variable Declarations & Types**: `int`, `float`, `bool` (`true`/`false`), and `string` (`"text"`).
+- **Functions**: Function declarations (`func name(int x, int y) int { ... }`), parameters, return statements, and function calls.
+- **Control Flow**: `if/else` statements and `while` loops.
+- **Logical & Relational Operators**: `&&`, `||`, `!`, `<`, `>`, `<=`, `>=`, `==`, `!=`.
+- **Arithmetic**: `+`, `-`, `*`, `/`.
 
-1. **Lexical Analysis (`compiler/lexer.py`)**: Converts raw string source code into a stream of tokens, discarding whitespace and comments.
-2. **Syntax Analysis (`compiler/parser.py`)**: A recursive descent parser that validates syntax and constructs an Abstract Syntax Tree (AST).
-3. **Semantic Analysis (`compiler/semantic.py`)**: Traverses the AST to check for undeclared variables and perform basic type checking (e.g., mixing `int` and `float`).
-4. **Intermediate Representation (IR) Generation (`compiler/ir_gen.py`)**: Converts the AST into linear Three-Address Code (TAC), heavily relying on temporary variables (`t1`, `t2`, etc.) and labels (`L1`, `L2`).
-5. **Code Optimization (`compiler/optimizer.py`)**: Reduces data redundancy and improves performance by applying:
+## The 9-Stage Compiler Pipeline
+
+1. **Lexical Analysis (`compiler/lexer.py`)**: Converts raw string source code into a stream of tokens, discarding whitespace and comments. Tracks line and column numbers for precise error reporting.
+2. **Syntax Analysis (`compiler/parser.py`)**: A recursive descent parser that validates syntax and constructs an Abstract Syntax Tree (AST). Throws exact contextual arrows pointing to syntax errors.
+3. **Semantic Analysis (`compiler/semantic.py`)**: Traverses the AST with a Block-Scoped Symbol Table to check for undeclared variables, missing return statements, and performs type-checking.
+4. **Intermediate Representation Generation (`compiler/ir_gen.py`)**: Converts the AST into linear Three-Address Code (TAC), heavily relying on temporary variables (`t1`, `t2`, etc.), labels (`L1`, `L2`), and simulated hardware stack operations (`param_push`/`param_pop`).
+5. **Code Optimization (`compiler/optimizer.py`)**: Reduces data redundancy and improves performance by iteratively applying:
     - **Constant Folding:** E.g., `2 * 3` becomes `6` at compile time.
     - **Constant Propagation:** Replaces variables with their known constant values.
     - **Copy Propagation:** Replaces uses of a copied variable with the original.
+    - **Common Subexpression Elimination (CSE):** Prevents re-evaluation of math that was already solved earlier.
     - **Dead Code Elimination:** Removes assignments to temporary variables that are never used.
-
-## Example Output (`sample.txt`)
-
-Input Program:
-```c
-int a = 5;
-int b = 10;
-// Constant expression
-int c = a + 2 * 3; 
-
-// Data redundancy
-int d = a;
-int e = d + b;
-
-if (e > 10) {
-    print(c);
-} else {
-    print(e);
-}
-```
-
-When compiled through the pipeline, the **Unoptimized IR** looks like this:
-```
-  a = 5
-  b = 10
-  t1 = 2 * 3
-  t2 = a + t1
-  c = t2
-  d = a
-  t3 = d + b
-  e = t3
-  t4 = e > 10
-  ifFalse t4 goto L3
-L1:
-  print c
-  goto L2
-L3:
-  print e
-L2:
-```
-
-After **Optimization**, the IR is drastically reduced:
-```
-  a = 5
-  b = 10
-  c = 11
-  d = 5
-  e = 15
-  ifFalse 1 goto L3
-L1:
-  print 11
-  goto L2
-L3:
-  print 15
-L2:
-```
+6. **Control Flow Graph (CFG) Construction (`compiler/cfg.py`)**: Organizes the optimized IR into logical Basic Blocks and draws successor/predecessor edges, paving the way for advanced liveness analysis.
+7. **Register Allocation (`compiler/register_allocator.py`)**: Maps the infinite number of variables and temporaries down to a simulated finite set of hardware CPU registers (e.g., `R0` through `R7`).
+8. **Virtual Machine Execution (`compiler/vm.py`)**: A custom software processor that interprets and runs the Optimized IR line-by-line, complete with a memory map, a function call stack, and real-time execution outputs.
+9. **C-Code Transpiler (`compiler/transpiler.py`)**: Translates the custom IR into fully valid, warning-free C code. It automatically infers variable types (`char*` vs `long long`), models the parameter stack, and outputs an `output.c` file that can be natively compiled into an executable.
 
 ## Running the Compiler
 
 Run the `main.py` driver program and pass a source file as an argument:
 ```bash
 python3 main.py sample.txt
-```# Mini-Compiler-Pipeline
+```
+
+You can then compile the transpiled output into a native macOS executable using:
+```bash
+gcc output.c -o my_program
+./my_program
+```
+
+## Example Program (`sample.txt`)
+
+```c
+// Global variables
+int a = 5;
+int b = 10;
+string message = "Starting calculation";
+
+// Function definition
+func multiply(int x, int y) int {
+    return x * y;
+}
+
+// Data redundancy (Constant Folding + Propagation + CSE)
+int c = a + 2 * 3;
+int d = a + 2 * 3; // CSE should catch this!
+
+// Function call
+int result = multiply(c, d);
+
+// While loop and Logical Operators
+bool flag = true;
+int counter = 0;
+
+while (counter < 5 && flag == true) {
+    print(message);
+    counter = counter + 1;
+    if (counter == 4) {
+        flag = false; // Escaping the loop early
+    }
+}
+
+print(result);
+```
