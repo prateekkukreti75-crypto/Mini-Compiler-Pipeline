@@ -1,0 +1,30 @@
+// Global variables
+int a = 5;
+int b = 10;
+string message = "Starting calculation";
+
+// Function definition
+func multiply(int x, int y) int {
+    return x * y;
+}
+
+// Data redundancy (Constant Folding + Propagation + CSE)
+int c = a + 2 * 3;
+int d = a + 2 * 3; // CSE should catch this!
+
+// Function call
+int result = multiply(c, d);
+
+// While loop and Logical Operators
+bool flag = true;
+int counter = 0;
+
+while (counter < 5 && flag == true) {
+    print(message);
+    counter = counter + 1;
+    if (counter == 4) {
+        flag = false; // Escaping the loop early
+    }
+}
+
+print(result);
